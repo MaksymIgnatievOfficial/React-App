@@ -13,10 +13,17 @@
 	color: #e5ffdf;
 }
 
+html,
+:root {
+	height: 100%;
+}
+
 body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	font-family: "Lecend Deca", sans-serif !important;
+	overflow-x: hidden;
+	min-height: 100dvh;
 }
 
 button {
