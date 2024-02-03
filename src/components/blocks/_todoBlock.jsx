@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react"
-// import { v4 as uuidv4 } from "uuid"
 import copy from "clipboard-copy"
 const LOCAL_STORAGE_TODOS_KEY = "todos"
 
@@ -11,7 +10,8 @@ export default function _todoBlock({ toggleClasses: coppied }) {
 
 	const inputRef = useRef(null)
 	const addTodoRef = useRef(null)
-	const editTextInputRef = useRef(null)
+	const editTodoInputRef = useRef(null)
+	const saveEditedTodoButton = useRef(null)
 
 	useEffect(() => {
 		setTodos(JSON.parse(localStorage.getItem(LOCAL_STORAGE_TODOS_KEY)))
@@ -21,6 +21,9 @@ export default function _todoBlock({ toggleClasses: coppied }) {
 				addTodoRef.current.click()
 			}
 		})
+		document.addEventListener("keypress", handleKeyPress)
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	useEffect(() => {
@@ -70,8 +73,8 @@ export default function _todoBlock({ toggleClasses: coppied }) {
 		const arr = [...todos]
 		if (idx > 0) {
 			;[arr[idx], arr[idx - 1]] = [arr[idx - 1], arr[idx]]
-			--arr[idx].order
-			++arr[idx - 1].order
+			++arr[idx].order
+			--arr[idx - 1].order
 		}
 		setTodos(arr)
 	}
@@ -79,6 +82,8 @@ export default function _todoBlock({ toggleClasses: coppied }) {
 		const arr = [...todos]
 		if (idx < arr.length - 1) {
 			;[arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]
+			--arr[idx].order
+			++arr[idx + 1].order
 		}
 		setTodos(arr)
 	}
@@ -91,41 +96,47 @@ export default function _todoBlock({ toggleClasses: coppied }) {
 	}
 
 	const copyTodo = (idx) => {
-		let jsonString = JSON.stringify(todos.find((_, i) => i === idx))
-		jsonString = "{\n\t"
-			.concat(
-				jsonString
-					.replace("{", "")
-					.replace("}", "")
-					.split(",")
-					.join(",\n\t")
+		copy(
+			JSON.stringify(
+				todos.find((_, i) => i === idx),
+				null,
+				"\t"
 			)
-			.concat("\n}")
-		copy(jsonString)
+		)
 	}
 
 	const handleEditClick = (index) => {
 		const todoToEdit = todos[index]
-		setEditingIndex(index)
-		setEditText(JSON.stringify(todoToEdit))
+		setEditingIndex((i) => index)
+		setEditText((t) => todoToEdit.text)
+		setTimeout(() => {
+			editTodoInputRef.current.focus()
+		}, 0)
 	}
 
 	const handleSaveClick = () => {
-		try {
-			const parsed = JSON.parse(editText)
-			setTodos((arr) => {
-				const updatedTodos = [...arr]
-				updatedTodos[editingIndex] = { ...parsed, order: editingIndex }
-				return updatedTodos
-			})
-			setEditingIndex(null)
-		} catch {
-			setEditingIndex(null)
-		}
+		setTodos((arr) => {
+			const updatedTodos = [...arr]
+			updatedTodos[editingIndex] = {
+				text: editText,
+				isComplete: arr[editingIndex].isComplete,
+				order: editingIndex,
+			}
+			return updatedTodos
+		})
+		setEditingIndex((c) => null)
 	}
 
 	const handleInputChange = (event) => {
 		setEditText(event.target.value)
+	}
+
+	const handleKeyPress = (event) => {
+		if (event.code === "Enter") {
+			if (editTodoInputRef.current === document.activeElement) {
+				saveEditedTodoButton.current.click()
+			}
+		}
 	}
 
 	return (
@@ -149,12 +160,18 @@ export default function _todoBlock({ toggleClasses: coppied }) {
 						{editingIndex === idx ? (
 							<>
 								<input
+									id="change-todo"
 									type="text"
 									value={editText}
 									onChange={handleInputChange}
-									ref={editTextInputRef}
+									ref={editTodoInputRef}
 								/>
-								<button onClick={handleSaveClick}>💾</button>
+								<button
+									onClick={() => handleSaveClick(idx)}
+									ref={saveEditedTodoButton}
+								>
+									💾
+								</button>
 							</>
 						) : (
 							<>

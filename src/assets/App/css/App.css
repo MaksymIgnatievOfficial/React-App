@@ -146,6 +146,10 @@ ul {
   font-size: 1em;
   color: #2a2;
 }
+.todo-item #change-todo {
+  font-size: 1.5em;
+  padding: 5px 16px;
+}
 
 footer {
   position: relative;
